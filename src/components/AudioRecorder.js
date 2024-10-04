@@ -12,28 +12,42 @@ const AudioRecorder = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunks = useRef([]);
 
-  useEffect(() => {
-    // Fetch available audio devices on component mount
-    const getAudioDevices = async () => {
-      try {
-        const deviceInfos = await navigator.mediaDevices.enumerateDevices();
-        const audioInputDevices = deviceInfos.filter(
-          (device) => device.kind === "audioinput"
-        );
-        setDevices(audioInputDevices);
-        // Select the first device by default
-        if (audioInputDevices.length > 0) {
-          setSelectedDeviceId(audioInputDevices[0].deviceId);
-        }
-      } catch (err) {
-        console.error("Error fetching audio devices: ", err);
-      }
-    };
+  // Function to request microphone access and enumerate devices after permission
+  const getAudioDevices = async () => {
+    try {
+      // Request microphone permission
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("Microphone permission granted");
 
+      // Once permission is granted, enumerate devices
+      const deviceInfos = await navigator.mediaDevices.enumerateDevices();
+      const audioInputDevices = deviceInfos.filter(
+        (device) => device.kind === "audioinput"
+      );
+      setDevices(audioInputDevices);
+      // Select the first device by default
+      if (audioInputDevices.length > 0) {
+        setSelectedDeviceId(audioInputDevices[0].deviceId);
+      }
+    } catch (err) {
+      console.error("Error accessing devices or microphone: ", err);
+      if (err.name === "NotAllowedError") {
+        alert(
+          "Microphone access denied. Please enable microphone permissions."
+        );
+      } else if (err.name === "NotFoundError") {
+        alert("No microphone found. Please connect a microphone.");
+      } else {
+        alert("Error occurred while accessing audio devices.");
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Fetch available audio devices when component mounts
     getAudioDevices();
   }, []);
 
-  // Handle microphone permission and start recording
   const handleMicPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
