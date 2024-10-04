@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef , useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { uploadAudio } from "../app/Api/uploadAudio"; // Import the API helper
 
 const AudioRecorder = () => {
@@ -13,6 +13,7 @@ const AudioRecorder = () => {
   const audioChunks = useRef([]);
 
   useEffect(() => {
+    // Fetch available audio devices on component mount
     const getAudioDevices = async () => {
       try {
         const deviceInfos = await navigator.mediaDevices.enumerateDevices();
@@ -20,6 +21,7 @@ const AudioRecorder = () => {
           (device) => device.kind === "audioinput"
         );
         setDevices(audioInputDevices);
+        // Select the first device by default
         if (audioInputDevices.length > 0) {
           setSelectedDeviceId(audioInputDevices[0].deviceId);
         }
@@ -31,6 +33,7 @@ const AudioRecorder = () => {
     getAudioDevices();
   }, []);
 
+  // Handle microphone permission and start recording
   const handleMicPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -53,7 +56,20 @@ const AudioRecorder = () => {
 
       startRecording();
     } catch (err) {
-      console.error("Error accessing microphone: ", err);
+      console.error("Error accessing microphone:", err);
+      if (err.name === "NotAllowedError") {
+        alert(
+          "Microphone access was denied. Please allow microphone access in your browser settings."
+        );
+      } else if (err.name === "NotFoundError") {
+        alert(
+          "No microphone was found. Please ensure you have an audio input device connected."
+        );
+      } else {
+        alert(
+          "An error occurred while accessing your microphone. Please try again."
+        );
+      }
     }
   };
 
